@@ -15,8 +15,12 @@ import java.util.UUID;
 @Setter
 public class Order {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String orderId;
+
     private String productId;
     private String status;
 }

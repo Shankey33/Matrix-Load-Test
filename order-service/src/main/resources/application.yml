@@ -15,13 +15,20 @@ spring:
       ddl-auto: update
     show-sql: true
 
+  # noinspection SpellCheckingInspection
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: order-group
+      group-id: order-group-v2
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         # This MUST be inside spring.kafka.consumer.properties
         spring.json.trusted.packages: "com.pm.common.dto"
+    listener:
+      concurrency: 5
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

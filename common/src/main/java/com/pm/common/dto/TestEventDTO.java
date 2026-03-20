@@ -47,6 +47,7 @@ public class TestEventDTO {
 
     public enum TestStatus {
         PASSED,
+        RUNNING,
         FAILED
     }
 }

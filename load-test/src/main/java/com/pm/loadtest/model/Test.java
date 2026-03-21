@@ -23,8 +23,8 @@ public class Test {
     private int successCount;
     private int failureCount;
 
-    private int avgLatencyMs;
-    private int p95LatencyMs;
+    private long avgLatencyMs;
+    private long p95LatencyMs;
 
     private int remainingStock;
     private boolean oversellDetected;

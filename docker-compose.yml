@@ -7,6 +7,7 @@ services:
     ports:
       - "6379:6379"
 
+
   # Persistent database for Orders
   postgres:
     image: postgres:16
@@ -16,7 +17,23 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: order_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
+
+  # Persistent database for Load Tests
+  load-test-postgres:
+    image: postgres:16
+    container_name: load-test-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: load_test_db
+
+    ports:
+      - "5434:5432"
+
+    networks:
+      - load-test-network
+
 
   # Message broker for async communication
   # noinspection SpellCheckingInspection
@@ -33,3 +50,9 @@ services:
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+
+
+
+networks:
+  load-test-network:
+    driver: bridge

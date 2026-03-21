@@ -20,7 +20,7 @@ public class TestEventDTO {
 
     @NotNull
     @DecimalMin("1.0")
-    private Double spawnRate;
+    private double spawnRate;
 
     @NotNull
     @Min(1)

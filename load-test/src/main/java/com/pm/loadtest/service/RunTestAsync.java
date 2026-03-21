@@ -1,11 +1,19 @@
 package com.pm.loadtest.service;
 
+import com.pm.common.dto.BuyRequestDTO;
 import com.pm.loadtest.model.Test;
 import com.pm.loadtest.repository.LoadTestRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,10 +27,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RunTestAsync {
 
     private final LoadTestRepository loadTestRepository;
+    private final RestTemplate restTemplate;
+
+    @Value("${loadtest.buy-url}")
+    private String url;
+
+    @Value("${loadtest.productId}")
+    private String productId;
 
     @Async("loadTestExecutor")
     public void runTest(String testId){
-        
+
+        List<Long> latencies = Collections.synchronizedList(new ArrayList<>());
         Optional<Test> testModel = loadTestRepository.findById(testId);
 
         if(!testModel.isPresent()) {
@@ -35,7 +51,7 @@ public class RunTestAsync {
         int users = test.getUsers();
         int poolSize = Math.min(users, 50);
         double spawnRate = test.getSpawnRate();
-        long delayMs = (long)(1000 / spawnRate);
+        long delayMs = spawnRate > 0 ? (long)(1000 / spawnRate) : 0;
 
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
 
@@ -47,11 +63,23 @@ public class RunTestAsync {
             executor.submit(() -> {
                 long start = System.currentTimeMillis();
                 try{
-                    Thread.sleep(50);
+
+                    BuyRequestDTO request = new BuyRequestDTO(productId);
+
+                    ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+
                     long latency = System.currentTimeMillis() - start;
-                    totalLatency.addAndGet(latency);
-                    success.incrementAndGet();
+
+                    if(response.getStatusCode().is2xxSuccessful()){
+                        latencies.add(latency);
+                        totalLatency.addAndGet(latency);
+                        success.incrementAndGet();
+                    } else {
+                        failure.incrementAndGet();
+                    }
+
                 } catch (Exception e) {
+                    log.error("Error simulating a req: " + e.getMessage());
                     failure.incrementAndGet();
                 }
             });
@@ -74,16 +102,24 @@ public class RunTestAsync {
         long totalReq = success.get() + failure.get();
         long avgLatency = totalReq == 0 ? 0 : totalLatency.get()/totalReq;
 
+        Collections.sort(latencies);
+        int index = (int) (0.95 * latencies.size());
+        long p95 = latencies.isEmpty() ? 0 : latencies.get(index);
 
 
-        test.setTotalRequests(users);
+        test.setTotalRequests(success.get() + failure.get());
         test.setSuccessCount(success.get());
         test.setFailureCount(failure.get());
         test.setAvgLatencyMs(avgLatency);
-        test.setP95LatencyMs(avgLatency);
+        test.setP95LatencyMs(p95);
         test.setRemainingStock(0);
         test.setOversellDetected(false);
-        test.setStatus(Test.FinalStatus.PASSED);
+
+        if (failure.get() > 0) {
+            test.setStatus(Test.FinalStatus.FAILED);
+        } else {
+            test.setStatus(Test.FinalStatus.PASSED);
+        }
 
         loadTestRepository.save(test);
 

@@ -15,3 +15,8 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+
+loadtest:
+  buy-url: http://localhost:8080/api/inventory/
+  productId: "101"

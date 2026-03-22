@@ -30,7 +30,7 @@ public class RunTestAsync {
     private final RestTemplate restTemplate;
 
     @Value("${loadtest.buy-url}")
-    private String url;
+    private String baseUrl;
 
     @Value("${loadtest.productId}")
     private String productId;
@@ -52,21 +52,23 @@ public class RunTestAsync {
         int poolSize = Math.min(users, 50);
         double spawnRate = test.getSpawnRate();
         long delayMs = spawnRate > 0 ? (long)(1000 / spawnRate) : 0;
+        String url = baseUrl + productId;
 
         ExecutorService executor = Executors.newFixedThreadPool(poolSize);
 
         AtomicInteger success = new AtomicInteger(0);
         AtomicInteger failure = new AtomicInteger(0);
         AtomicLong totalLatency = new AtomicLong(0);
+        log.warn(url);
 
         for(int i = 0; i < users; i++){
             executor.submit(() -> {
                 long start = System.currentTimeMillis();
                 try{
 
-                    BuyRequestDTO request = new BuyRequestDTO(productId);
+                    BuyRequestDTO request = new BuyRequestDTO();
 
-                    ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+                      ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
                     long latency = System.currentTimeMillis() - start;
 
@@ -106,22 +108,26 @@ public class RunTestAsync {
         int index = (int) (0.95 * latencies.size());
         long p95 = latencies.isEmpty() ? 0 : latencies.get(index);
 
+        boolean overSell = success.get() > test.getQuantity();
+        int remaining = Math.max(0, test.getQuantity() - success.get());
 
         test.setTotalRequests(success.get() + failure.get());
         test.setSuccessCount(success.get());
         test.setFailureCount(failure.get());
         test.setAvgLatencyMs(avgLatency);
         test.setP95LatencyMs(p95);
-        test.setRemainingStock(0);
-        test.setOversellDetected(false);
+        test.setRemainingStock(remaining);
+        test.setOversellDetected(overSell);
 
-        if (failure.get() > 0) {
+        if (overSell) {
             test.setStatus(Test.FinalStatus.FAILED);
         } else {
             test.setStatus(Test.FinalStatus.PASSED);
         }
 
         loadTestRepository.save(test);
+
+        log.info("Stock={}, Success={}, Oversell={}", test.getQuantity(), success.get(), overSell);
 
     }
 }

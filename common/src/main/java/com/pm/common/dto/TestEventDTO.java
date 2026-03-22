@@ -35,9 +35,9 @@ public class TestEventDTO {
 
     private int failureCount;
 
-    private int avgLatencyMs;
+    private long avgLatencyMs;
 
-    private int p95LatencyMs;
+    private long p95LatencyMs;
 
     private int remainingStock;
 

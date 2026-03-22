@@ -18,5 +18,5 @@ spring:
 
 
 loadtest:
-  buy-url: http://localhost:8080/api/inventory/
+  buy-url: http://localhost:8080/api/inventory/buy/
   productId: "101"

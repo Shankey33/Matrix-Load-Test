@@ -63,40 +63,48 @@ public class RunTestAsync {
 
         for(int i = 0; i < users; i++){
             executor.submit(() -> {
-                long start = System.currentTimeMillis();
-                try{
+                long endTime = System.currentTimeMillis() + test.getDurationMs();
 
-                    BuyRequestDTO request = new BuyRequestDTO();
+                while (System.currentTimeMillis() < endTime) {
+                    long start = System.currentTimeMillis();
+                    try {
+                        BuyRequestDTO request = new BuyRequestDTO();
 
-                      ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+                        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
-                    long latency = System.currentTimeMillis() - start;
 
-                    if(response.getStatusCode().is2xxSuccessful()){
+                        if (response.getStatusCode().is2xxSuccessful()) {
+
+                            success.incrementAndGet();
+                        } else {
+                            failure.incrementAndGet();
+                        }
+
+                        long jitter = (long) (Math.random() * 5) + 1;
+                        Thread.sleep(jitter);
+
+                    } catch (Exception e) {
+                        log.error("Error simulating a req: " + e.getMessage());
+                        failure.incrementAndGet();
+                    } finally{
+                        long latency = System.currentTimeMillis() - start;
                         latencies.add(latency);
                         totalLatency.addAndGet(latency);
-                        success.incrementAndGet();
-                    } else {
-                        failure.incrementAndGet();
                     }
-
-                } catch (Exception e) {
-                    log.error("Error simulating a req: " + e.getMessage());
-                    failure.incrementAndGet();
                 }
             });
 
             try{
                 Thread.sleep(delayMs);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                Thread.currentThread().interrupt();
             }
         }
 
         executor.shutdown();
 
         try{
-            executor.awaitTermination(1, TimeUnit.MINUTES);
+            executor.awaitTermination(test.getDurationMs() + 5000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             Thread.currentThread().interrupt();
         }

@@ -47,11 +47,10 @@ public class Purchase {
                 Collections.singletonList(key)
         );
 
-        if (result != null && result >= 0) {
+        if (result >= 0) {
 
             String orderId = UUID.randomUUID().toString();
             OrderEventDTO orderEventDTO = new OrderEventDTO(orderId, productId, "PENDING");
-
             kafkaTemplate.send("sale-orders", orderId, orderEventDTO);
 
             return true;

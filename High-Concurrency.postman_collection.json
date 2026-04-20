@@ -1,0 +1,119 @@
+{
+  "info": {
+    "name": "High-Concurrency Microservices",
+    "description": "Postman collection for High-Concurrency Java Spring Boot Workspace",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "API Gateway (Inventory & Orders)",
+      "item": [
+        {
+          "name": "Buy Product",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/inventory/buy/101",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "inventory",
+                "buy",
+                "101"
+              ]
+            },
+            "description": "Purchase a product. Note: The application uses a hardcoded product ID of '101' in some operations."
+          }
+        },
+        {
+          "name": "Set Stock Quantity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1000\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/inventory/set/quantity",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "inventory",
+                "set",
+                "quantity"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Load Test Service",
+      "item": [
+        {
+          "name": "Start Load Test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"testId\": \"test-run-1\",\n  \"users\": 100,\n  \"spawnRate\": 10.0,\n  \"durationMs\": 5000,\n  \"quantity\": 50\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/load-test/start",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "load-test",
+                "start"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Load Test Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/load-test/status/test-run-1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "load-test",
+                "status",
+                "test-run-1"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
